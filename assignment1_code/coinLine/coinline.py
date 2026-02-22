@@ -17,7 +17,9 @@ Subsequently, the players alternate with each additional move.
 If there no coins left, any return value is acceptable.
 """
 def player(state):
-    raise NotImplementedError
+    if not state.coins:
+        return 'player'
+    return state.turn
 
 
 """
@@ -33,7 +35,18 @@ Possible moves depend on the numner of coins left.
 Any return value is acceptable if there are no coins left.
 """
 def actions(state):
-    raise NotImplementedError
+    coins = state.coins
+    n = len(coins)
+    if n == 0:
+        return []
+    out = []
+    if n >= 1:
+        out.append(('L', 1))
+        out.append(('R', 1))
+    if n >= 2:
+        out.append(('L', 2))
+        out.append(('R', 2))
+    return out
 
 """
 Returns the line of coins that results from taking action (i, j), without modifying the 
@@ -50,7 +63,23 @@ input state itself is not a correct implementation of this function. You’ll li
 deep copy of the state first before making any changes.
 """
 def succ(state, action):
-    raise NotImplementedError
+    side, count = action
+    coins = list(state.coins)
+    if side == 'L':
+        taken = sum(coins[:count])
+        new_coins = coins[count:]
+    else:
+        taken = sum(coins[-count:])
+        new_coins = coins[:-count]
+    if state.turn == 'player':
+        new_p = state.pScore + taken
+        new_ai = state.aiScore
+        new_turn = 'ai'
+    else:
+        new_p = state.pScore
+        new_ai = state.aiScore + taken
+        new_turn = 'player'
+    return State(new_coins, pScore=new_p, aiScore=new_ai, turn=new_turn)
 
 """
 Returns True if game is over, False otherwise.
@@ -60,7 +89,7 @@ If the game is over when there are no coins left.
 Otherwise, the function should return False if the game is still in progress.
 """
 def terminal(state):
-    raise NotImplementedError
+    return len(state.coins) == 0
 
 """
 Returns the scores of the two players.
@@ -68,7 +97,8 @@ Returns the scores of the two players.
 You may assume utility will only be called on a state if terminal(state) is True.
 """
 def utility(state):
-    raise NotImplementedError
+    # AI is the maximizer in minimax; positive value = good for AI
+    return state.aiScore - state.pScore
 
 """
 Returns the winner of the game, if there is one.
@@ -79,7 +109,13 @@ Returns the winner of the game, if there is one.
   function should return None.
 """
 def winner(state):
-    raise NotImplementedError
+    if not terminal(state):
+        return None
+    if state.pScore > state.aiScore:
+        return 'player'
+    if state.aiScore > state.pScore:
+        return 'ai'
+    return None
     
 
 
@@ -94,7 +130,31 @@ If multiple moves are equally optimal, any of those moves is acceptable.
 If the board is a terminal board, the minimax function should return None.
 """
 def minimax(state, is_maximizing):
-    raise NotImplementedError
+    if terminal(state):
+        return (utility(state), None)
+    act_list = actions(state)
+    if not act_list:
+        return (utility(state), None)
+    if is_maximizing:
+        best_val = float('-inf')
+        best_act = None
+        for a in act_list:
+            child = succ(state, a)
+            val, _ = minimax(child, False)
+            if val > best_val:
+                best_val = val
+                best_act = a
+        return (best_val, best_act)
+    else:
+        best_val = float('inf')
+        best_act = None
+        for a in act_list:
+            child = succ(state, a)
+            val, _ = minimax(child, True)
+            if val < best_val:
+                best_val = val
+                best_act = a
+        return (best_val, best_act)
 
 
     

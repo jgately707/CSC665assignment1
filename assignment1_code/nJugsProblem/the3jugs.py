@@ -73,8 +73,22 @@ class NJugsProblem(SearchProblem):
     i corresponds to the jug affected by the action
     j is a valid number only if the action is "pour" (i.e. pour from jug i into jug j). Otherwise it should be set to None
     """
-    def actions(state):
-        raise NotImplementedError
+    def actions(self, state):
+        out = []
+        caps = self.capacities
+        n = self.n
+        for i in range(n):
+            if state[i] < caps[i]:
+                out.append(('fill', i, None))
+            if state[i] > 0:
+                out.append(('empty', i, None))
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                if state[i] > 0 and state[j] < caps[j]:
+                    out.append(('pour', i, j))
+        return out
 
     """
     Returns the state of the jugs after taking action (kind, i, j), without modifying the original state.
@@ -89,8 +103,22 @@ class NJugsProblem(SearchProblem):
     implementation of this function. You’ll likely want to make a 
     copy of the state first before making any changes.
     """
-    def succ(state, action):
-        raise NotImplementedError
+    def succ(self, state, action):
+        kind, i, j = action
+        amt = list(state)
+        caps = self.capacities
+        if kind == 'fill':
+            amt[i] = caps[i]
+        elif kind == 'empty':
+            amt[i] = 0
+        elif kind == 'pour':
+            room = caps[j] - amt[j]
+            transfer = min(amt[i], room)
+            amt[i] -= transfer
+            amt[j] += transfer
+        else:
+            raise ValueError(f"Unknown action: {action}")
+        return tuple(amt)
 
 
     # ---- Helpers ----

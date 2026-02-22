@@ -130,7 +130,32 @@ class BFSSearch:
         self.problem = problem
 
     def solve(self):
-        raise NotImplementedError()
+        problem = self.problem
+        start = problem.start_state()
+        visited = {str(start)}
+        # Queue: (state, path_after_start, cost_so_far)
+        queue = deque([(start, [], 0)])
+        while queue:
+            state, path, cost = queue.popleft()
+            if problem.is_end(state):
+                return dict(
+                    best_cost=cost,
+                    best_path=[problem.start_state()] + path,
+                    found=True,
+                    expanded=len(visited),
+                )
+            for action in problem.actions(state):
+                next_state = problem.succ(state, action)
+                key = str(next_state)
+                if key not in visited:
+                    visited.add(key)
+                    queue.append((next_state, path + [next_state], cost + problem.cost(state, action)))
+        return dict(
+            best_cost=math.inf,
+            best_path=[],
+            found=False,
+            expanded=len(visited),
+        )
 
 """
 Add an iterative implementation of DFS.
@@ -144,13 +169,36 @@ returns a dictionary with the following informatin:
     expanded= # of state explored
 """
 class DFSSearch:
-
-
     def __init__(self, problem: SearchProblem):
         self.problem = problem
 
     def solve(self):
-        raise NotImplementedError()
+        problem = self.problem
+        start = problem.start_state()
+        visited = {str(start)}
+        # Stack: (state, path_after_start, cost_so_far)
+        stack = [(start, [], 0)]
+        while stack:
+            state, path, cost = stack.pop()
+            if problem.is_end(state):
+                return dict(
+                    best_cost=cost,
+                    best_path=[problem.start_state()] + path,
+                    found=True,
+                    expanded=len(visited),
+                )
+            for action in reversed(problem.actions(state)):
+                next_state = problem.succ(state, action)
+                key = str(next_state)
+                if key not in visited:
+                    visited.add(key)
+                    stack.append((next_state, path + [next_state], cost + problem.cost(state, action)))
+        return dict(
+            best_cost=math.inf,
+            best_path=[],
+            found=False,
+            expanded=len(visited),
+        )
 
 
 
