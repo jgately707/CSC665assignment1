@@ -115,7 +115,7 @@ def winner(state):
         return 'player'
     if state.aiScore > state.pScore:
         return 'ai'
-    return None
+    return 'tie'
     
 
 
